@@ -1,0 +1,103 @@
+version: '3.9'
+
+services:
+    prestashop:
+        image: prestashop/prestashop:1.7
+        #build: ./prestashop
+        #    context: .
+        #    dockerfile: Dockerfile
+        container_name: prestashop
+        restart: always
+        links:
+            - mariadb:mariadb
+        depends_on:
+            - mariadb
+        environment:
+            DB_SERVER: mariadb
+            ADMIN_MAIL: admin@trio.trio
+            ADMIN_PASSWD: pa2w0rd
+            #PS_DEV_MODE: 0
+            PS_DEV_MODE: ${PS_DEV_MODE}
+            PS_HOST: mariadb
+            #PS_PORT: 3306
+            #PS_HOST_MODE: 0
+            #PS_DEMO_MODE: 0
+            DB_USER: ${DB_USER}
+            DB_PASSWD: ${DB_PASSWD}
+            DB_PREFIX: ps_
+            DB_NAME: ${DB_NAME}
+            PS_INSTALL_AUTO: 1
+            # wyłączam
+            # wyrzuca błąd
+            # Could not open input file: /var/www/html//index_cli.php
+            # prestashop exited with code 1
+            #PS_ERASE_DB: 0
+            # wyrzuca błąd
+            #PS_INSTALL_DB: 0
+            # wyrzuca błąd
+            PS_DOMAIN: ${PS_DOMAIN}:8080
+            PS_LANGUAGE: ${PS_LANGUAGE}
+            PS_COUNTRY: ${PS_COUNTRY}
+            PS_ALL_LANGUAGES: 0
+            PS_FOLDER_ADMIN: ${PS_FOLDER_ADMIN} #admintrio
+            PS_FOLDER_INSTALL: installed
+            # wyłącza
+            #PS_SSL_ENABLE: 1
+            #PS_SSL_ENABLED_EVERYWHERE: 1
+            PS_HANDLE_DYNAMIC_DOMAIN: 1
+        volumes:
+            #- './prestashop:/var/www/html'
+            - ${PWD}/prestashop:/var/www/html
+            #- ./prestashop/modules:/var/www/html/modules
+            #- ./prestashop/themes:/var/www/html/themes
+            #- ./prestashop/override:/var/www/html/override
+        ports:
+            - 8080:80
+        networks:
+            - trioprestashop
+
+    mariadb:
+        image: mariadb
+        container_name: mariadb
+        restart: always
+        networks:
+            - trioprestashop
+        volumes:
+            - ${PWD}/mariadb/data:/var/lib/mysql
+            - ${PWD}/mariadb/dump:/docker-entrypoint-initdb.d
+        environment:
+            MYSQL_ROOT_PASSWORD: prestashop
+            MYSQL_DATABASE: prestashop
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        restart: always
+        networks:
+            - trioprestashop
+        links:
+            - mariadb:mariadb
+        ports:
+            #- 1235:80
+            - 81:80
+        depends_on:
+            - mariadb
+        environment:
+            # - PMA_HOST=mariadb
+            # - PMA_USER=root
+            # - PMA_PASSWORD=mycustompassword
+            PMA_HOST: ${PMA_HOST}
+            PMA_USER: ${DB_USER}
+            PMA_PASSWORD: ${DB_PASSWD}
+
+volumes:
+  #${PWD}/mysql:
+    mariadb:
+    #    driver: local
+    prestashop:
+
+networks:
+    trioprestashop:
+
+#volumes:
+#    nodemodules: {}
